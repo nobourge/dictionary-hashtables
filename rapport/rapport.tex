@@ -1,0 +1,80 @@
+\documentclass[utf8]{article}
+
+\usepackage[utf8]{inputenc}
+
+\usepackage[parfill]{parskip}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+\usepackage{fullpage}
+
+% -----------------------------------------------------
+
+
+\title{Titre}
+\author{Nom prénom}
+\date{16 mai 2021}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\newpage
+
+% -----------------------------------------------------
+
+\section{Introduction}
+
+% Insérer l'introduction ici
+
+% Exemple d'ajout d'une image
+\begin{figure}[H]
+  \centering
+	\includegraphics[scale=0.4]{img/logo.png}
+  \label{fig:logo}
+\end{figure}
+
+\section{Méthodes}
+
+% Exemple d'ajout d'un pseudo-code avec les packages algorithm/algorithmicx
+\begin{algorithm}
+\caption{Algorithme de Kernighan \& Ritchie}
+\begin{algorithmic}[1]
+\Procedure{KR}{\textbf{string} $s$}
+\State \verb+hash+ $\gets$ 0
+\ForAll{\textbf{char} $c$ \textbf{in} $s$}
+  \State \verb+hash+ $\gets$ \verb+hash+ + $c$
+\EndFor
+\State \Return \verb+hash+
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Sous-section}
+
+\subsubsection{Sous-sous-section}
+
+\section{Résultats}
+
+% Exemple d'ajout d'un tableau
+\begin{center}
+\begin{tabular}{|c|c|}
+\hline
+1$^{\text{ère}}$ ligne & test \\
+2$^{\text{ème}}$ ligne & test 2 \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{Discussion}
+
+\section{Conclusion}
+
+
+\end{document}
