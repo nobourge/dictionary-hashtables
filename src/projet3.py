@@ -9,21 +9,18 @@ from random import random
 from math import log
 
 
-class DictOpenAddressing:
+class Dict:
     def __init__(self, m):
         self.m = m
         self.table = [[] for i in range(m)]
+        self.keys = set()  # set element search faster
 
     def __len__(self):
         """
         :param self:
         :return: container keys quantity
         """
-        keys_quantity = 0
-        for i in range(self.m):
-            if self.table[i]:
-                keys_quantity += 1
-        return keys_quantity
+        return len(self.keys)
 
     @property
     def load_factor(self):
@@ -32,7 +29,7 @@ class DictOpenAddressing:
         """
         return len(self) / self.m
 
-    def h1(self, k):
+    def kr(self, k):
         """
         Kernighan & Ritchie Algorithm
         :param k: str: key
@@ -44,7 +41,7 @@ class DictOpenAddressing:
         # print('kr', hashkey)
         return hashkey
 
-    def h2(self, k):
+    def djb2(self, k):
         """
         Daniel J. Bernstein djb2 Algorithm
         :param k: str: key
@@ -56,95 +53,32 @@ class DictOpenAddressing:
         # print('djb2', numpy.uint32(hash))
         return numpy.uint32(hash)
 
-    def double_h(self, k, i):
-        """
-        hashes k with combined use of h1 & h2
-        :param k: str: key
-        :param i: int: iter
-        :return: int
-        """
-        return self.h1(k) + (i * self.h2(k))
+    def h(self, k):
+        pass
+
+    def double_h(self, k, survey_nb):
+        pass
+
+    def get_hk(self, k, survey_nb=None):
+        if 1 == self.m:
+            return 0
+        else:
+            if survey_nb is not None:
+                return self.double_h(k, survey_nb) % self.m
+            else:
+                return self.h(k) % self.m
+
+    def get_entry_for(self, k):
+        return self.table[self.get_hk(k, survey_nb=None)]
 
     def insert(self, k, v):
-        """
-        inserts [k, v] or v if k already in dict
-        :param k: key
-        :param v: value linked to key k
-        :return: None or OverflowError exception if no free location was
-        found
-        """
-        if 1 == self.m:
-            if not self.table[0]:
-                self.table[0] = [k, v]
-            elif self.table[0][0] == k:
-                self.table[0][-1] = v
-            else:
-                raise OverflowError
-
-        elif 1 < self.m:
-            inserted = False
-            i = 0
-            while not inserted:
-                j = self.double_h(k, i) % self.m
-                # print('hashtable index', j)
-                if not self.table[j]:
-                    self.table[j] = [k, v]
-                    inserted = True
-                elif self.table[j][0] == k:
-                    self.table[j][-1] = v
-                    inserted = True
-                else:
-                    i += 1
-        else:
-            raise OverflowError
+        pass
 
     def search(self, k):
-        """
-        :param k: key
-        :return: value linked to k if k in dict else KeyError
-        """
-
-        if self.m == 1 and self.table[0][0] == k:
-            return self.table[0][1]
-        elif 1 < self.m:
-            found = False
-            i = 0
-            j = self.double_h(k, i) % self.m
-            while not found and j:
-                if k == self.table[j][0]:
-                    # found = True
-                    return self.table[j][1]
-                else:
-                    i += 1
-                    j = self.double_h(k, i) % self.m
-        else:
-            raise KeyError
+        pass
 
     def delete(self, k):
-        """La suppression d’un ´el´ement dans une table de hachage `a adressage ouvert n’est pas triviale. En effet puisque
-        l’adressage ouvert consiste en un sens a simuler le chaınage des elements dont la clef est hachee vers la meme
-        valeur en utilisant des cellules libres de la table, mettre un ´el´ement quelconque `a None revient `a casser la
-        liste chaˆın´ee en retirant un ´el´ement et tous les suivants. Il est donc important de maintenir la structure afin
-        de pouvoir tout de mˆeme faire une recherche sur les ´el´ements qui suivent dans la table.
-        Une solution est de marquer les cellules de la table qui ont contenu une entr´ee dans le pass´e
-        mais qui ont ´et´e supprim´ees depuis. Ainsi, lors de l’ex´ecution de la m´ethode search, ces cellules ne forceront
-        pas l’arrˆet de la boucle, mais la recherche continuera bien jusqu’`a trouver soit None soit une entr´ee de la clef
-        recherch´ee."""
-        if self.m == 1 and self.table[0][0] == k:
-            return self.table[0][1]
-        elif 1 < self.m:
-            found = False
-            i = 0
-            j = self.double_h(k, i) % self.m
-            while not found and j:
-                if k == self.table[j][0]:
-                    found = True
-                    self.table[j][1] = "deleted"
-                else:
-                    i += 1
-                    j = self.double_h(k, i) % self.m
-        else:
-            raise KeyError
+        pass
 
     def __setitem__(self, k, v):
         self.insert(k, v)
@@ -154,6 +88,103 @@ class DictOpenAddressing:
 
     def __delitem__(self, k):
         self.delete(k)
+
+
+class DictOpenAddressing(Dict):
+    def __init__(self, m):
+        super().__init__(m)
+
+    def double_h(self, k, i):
+        """
+        hashes k with combined use of kr & djb2
+        :param k: str: key
+        :param i: int: iter
+        :return: int
+        """
+        return self.kr(k) + (i * self.djb2(k))
+
+    def insert(self, k, v, survey_nb=False):
+        """
+        inserts [k, v] or v if k already in dict
+        :param survey_nb:
+        :param k: key
+        :param v: value linked to key k
+        :return: None or OverflowError exception if no free location was
+        found
+        """
+        survey_nb = 0
+        if 1 == self.m:
+            if not self.table[0]:
+                self.table[0] = [k, v]
+                self.keys.add(k)
+            elif self.table[0][0] == k:
+                self.table[0][-1] = v
+            else:
+                raise OverflowError
+            survey_nb = 1
+
+        elif 1 < self.m:
+            survey_nb = self.search(k, v, insert=True)
+
+        return survey_nb
+
+    def search(self, k, v=None,
+               survey_nb=False,
+               survey_nb_check=False,
+               insert=False,
+               delete=False):
+        """
+        :param v:
+        :param insert:
+        :param delete:
+        :param survey_nb:
+        :param k: key
+        :return: value linked to k if k in dict else KeyError
+        """
+        survey_nb = 0
+        if insert or k in self.keys:
+            while survey_nb < self.m:
+                hk = self.get_hk(k, survey_nb)
+
+                if not self.table[hk] or self.table[hk] == "deleted":
+                    if insert:
+                        self.table[hk] = [k, v]
+                        self.keys.add(k)
+                        return survey_nb
+                    else:
+                        if self.table[hk] == "deleted":
+                            survey_nb += 1
+
+                elif self.table[hk][0] == k:
+                    if insert:
+                        self.table[hk][1] = v
+                    elif delete:
+                        self.table[hk] = "deleted"
+                        self.keys.remove(k)
+                    else:   # search
+                        if survey_nb_check:
+                            return survey_nb
+                        else:
+                            return self.table[hk][1]
+                    return survey_nb
+                else:
+                    survey_nb += 1
+
+            raise OverflowError
+
+        else:
+            raise KeyError
+
+    def delete(self, k, survey_nb=False):
+        """
+        remplace la paire clé(k)-valeur si k est trouvé,
+        leve une KeyError sinon
+        :param k:
+        :param survey_nb:
+        :return:
+        """
+        survey_nb = self.search(k, delete=True)
+        return survey_nb
 
 
 class Node:
@@ -172,8 +203,8 @@ class Node:
     def getNext(self):
         return self.next
 
-    def setData(self, newdata):
-        self.data = newdata
+    def setValue(self, newalue):
+        self.value = newalue
 
     def setNext(self, newnext):
         self.next = newnext
@@ -182,49 +213,36 @@ class Node:
 class LinkedList:
     def __init__(self):
         self.head = None
+        self.keys = set()
 
     def isEmpty(self):
         return self.head is None
 
     def length(self):
-        current = self.head
-        count = 0
-        while current is not None:
-            count = count + 1
-            current = current.getNext()
-        return count
+        return len(self.keys)
 
     def add(self, key, value):
         temp = Node(key, value)
         temp.setNext(self.head)
         self.head = temp
+        self.keys.add(key)
 
-    def addAfter(self, base, key, value):
-        temp = Node(key, value)
-        temp.setNext(base.getNext())
-        base.setNext(temp)
-
-    def search(self, key):
+    def get_value_of(self, key, survey_nb_check=False):
         current = self.head
         found = False
+        survey_nb = 0
         while current is not None and not found:
             if current.getKey() == key:
-                found = True
+                if survey_nb_check:
+                    return survey_nb
+                else:
+                    return current.getValue()
             else:
                 current = current.getNext()
-        return found
+                survey_nb +=1
 
-    def get_value_of(self, key):
-        current = self.head
-        found = False
-
-        while current is not None and not found:
-            if current.getKey() == key:
-                return current.getValue()
-            else:
-                current = current.getNext()
-
-    def remove(self, key):
+    def remove(self, key, survey_nb_check=False):
+        survey_nb = 0
         previous = None
         current = self.head
         found = False
@@ -238,84 +256,61 @@ class LinkedList:
             else:
                 previous = current
                 current = current.getNext()
+                survey_nb += 1
+        # if survey_nb_check:
+        return survey_nb
 
 
-class DictChainingLinkedList:
+class DictChaining(Dict):
     def __init__(self, m):
-        self.m = m
-        self.table = [LinkedList for i in range(m)]
-
-    def __len__(self):
-        """
-        :param self:
-        :return: container keys quantity
-        """
-        keys_quantity = 0
-        for i in range(self.m):
-            keys_quantity += self.table[i].length()
-        return keys_quantity
+        super().__init__(m)
 
     def h(self, k):
-        """
-        Daniel J. Bernstein djb2 Algorithm
-        :param k: str: key
-        :return: int
-        """
-        hash = numpy.uint32(0x1505)
-        for char in k:
-            hash = 33 * hash + ord(char)
-        # print('djb2', numpy.uint32(hash))
-        return numpy.uint32(hash)
+        return self.djb2(k)
 
-    def insert(self, k, v):
+
+class DictChainingLinkedList(DictChaining):
+    def __init__(self, m):
+        super().__init__(m)
+        self.table = [LinkedList() for _ in range(m)]
+
+    def insert(self, k, v, survey_nb_check=False):
         """ l’insertion dans un liste chaˆın´ee se fait en d´ebut de
         chaˆıne"""
-        if 1 == self.m:
-            hk = 0
+        survey_nb = 1
+        entry = self.get_entry_for(k)
+
+        if k in entry.keys:
+            current = entry.head
+            found = False
+            while current is not None and not found:
+                if current.getKey() == k:
+                    found = True
+                    current.setValue(v)
+                else:
+                    current = current.getNext()
+                    survey_nb += 1
         else:
-            hk = self.h(k) % self.m
-        entry = self.table[hk]
-        current = entry().head
-        found = False
+            entry.add(k, v)
+            self.keys.add(k)
 
-        while current is not None and not found:
-            if current.getKey() == k:
-                found = True
-                current.setValue(v)
-            else:
-                current = current.getNext()
-        if not found:
-            entry().add(k, v)
+        return survey_nb
 
-    def search(self, k):
+    def search(self, k, survey_nb_check=False):
         """
         :param k: key
         :return: value linked to k if k in dict else KeyError
         """
-        if self.m == 1:
-            return self.table[0].get_value_of(k)
-        elif 1 < self.m:
-            j = self.h(k) % self.m
-            return self.table[j].get_value_of(k)
+        if k in self.keys:
+            return self.get_entry_for(k).get_value_of(k, survey_nb_check)
         else:
             raise KeyError
 
-    def delete(self, k):
-        if 1 == self.m:
-            hk = 0
-        else:
-            hk = self.h(k) % self.m
-        entry = self.table[hk]
-        entry.remove(k)
-
-    def __setitem__(self, k, v):
-        self.insert(k, v)
-
-    def __getitem__(self, k):
-        return self.search(k)
-
-    def __delitem__(self, k):
-        self.delete(k)
+    def delete(self, k, survey_nb_check=False):
+        entry = self.get_entry_for(k)
+        survey_nb = entry.remove(k)
+        self.keys.remove(k)
+        return survey_nb
 
 
 class End(object):
@@ -332,7 +327,7 @@ class End(object):
         return True
 
 
-NIL = Node(End(), [], [])
+NIL = Node(End(), End(), next=[], width=[])
 
 
 class Skiplist:
@@ -353,14 +348,20 @@ class Skiplist:
                 node = node.next[level]
         return node.value
 
-    def insert(self, key, value):
+    def insert(self, key, value, survey_nb_check=False):
+        survey_nb = 1   # search for entry
         chain = [None] * self.maxlevels
         steps_at_level = [0] * self.maxlevels
         node = self.head
         for level in reversed(range(self.maxlevels)):
-            while node.next[level].value <= value:
+            level_next_key = node.next[level].key
+            while level_next_key <= key:
+                # print(level_next_key, key)
+
                 steps_at_level[level] += node.width[level]
                 node = node.next[level]
+                level_next_key = node.next[level].key
+                survey_nb += 1
             chain[level] = node
         d = 1
         while d < self.maxlevels and random() < 0.5:
@@ -369,7 +370,7 @@ class Skiplist:
         steps = 0
         for level in range(d):
             prevnode = chain[level]
-            newnode.next[level] = prevnode.next[level]
+            newnode.next[level] = prevnode.getNext()[level]
             prevnode.next[level] = newnode
             newnode.width[level] = prevnode.width[level] - steps
             prevnode.width[level] = steps + 1
@@ -377,15 +378,18 @@ class Skiplist:
         for level in range(d, self.maxlevels):
             chain[level].width[level] += 1
         self.size += 1
+        return survey_nb
 
-    def remove(self, value):
+    def remove(self, key, survey_nb_check=False):
+        survey_nb = 1   # search for entry
         chain = [None] * self.maxlevels
         node = self.head
         for level in reversed(range(self.maxlevels)):
-            while node.next[level].value < value:
+            while node.next[level].key < key:
                 node = node.next[level]
+                survey_nb += 1
             chain[level] = node
-        if value != chain[0].next[0].value:
+        if key != chain[0].next[0].key:
             raise KeyError('NotFound')
         d = len(chain[0].next[0].next)
         for level in range(d):
@@ -397,69 +401,62 @@ class Skiplist:
             chain[level].width[level] -= 1
         self.size -= 1
 
-    def find(self, value):
+        return survey_nb
+
+    def find(self, key, survey_nb_check=False):
+        survey_nb = 1   # search for entry
         node = self.head
         for level in reversed(range(self.maxlevels)):
-            while node.next[level].value < value:
+            while node.next[level].getKey() < key:
                 node = node.next[level]
         node = node.next[0]
-        if node.value == value:
-            return node
+        if node.getKey() == key:
+            return survey_nb, node
+        return None
+
+    def find_value_of(self, key, survey_nb_check=False):
+        node = self.head
+        for level in reversed(range(self.maxlevels)):
+            while node.next[level].getKey() < key:
+                node = node.next[level]
+        node = node.next[0]
+        if node.getKey() == key:
+            return node.getValue()
         return None
 
 
-class DictChainingSkipList:
+class DictChainingSkipList(DictChaining):
     def __init__(self, m):
-        self.m = m
-        self.table = [Skiplist for i in range(m)]
+        super().__init__(m)
+        self.table = [Skiplist() for i in range(m)]
 
-    def __len__(self):
-        """
-        :param self:
-        :return: container keys quantity
-        """
-        keys_quantity = 0
-        for i in range(self.m):
-            keys_quantity += self.table[i].length()
-        return keys_quantity
-
-    def h(self, k):
-        """
-        Daniel J. Bernstein djb2 Algorithm
-        :param k: str: key
-        :return: int
-        """
-        hash = numpy.uint32(0x1505)
-        for char in k:
-            hash = 33 * hash + ord(char)
-        # print('djb2', numpy.uint32(hash))
-        return numpy.uint32(hash)
-
-    def get_entry_for(self, k):
-        if 1 == self.m:
-            hk = 0
+    def insert(self, k, v, survey_nb_check=False):
+        skiplist = self.get_entry_for(k)
+        if k in self.keys:
+            survey_nb, node = skiplist.find(k, survey_nb_check)
+            node.setValue(v)
         else:
-            hk = self.h(k) % self.m
-        return self.table[hk]
+            survey_nb = skiplist.insert(k, v, survey_nb_check)
+        self.keys.add(k)
+        return survey_nb
 
-    def insert(self, k, v):
-        self.get_entry_for(k).insert(k, v)
-
-    def search(self, k):
+    def search(self, k, survey_nb_check=False):
         """
         :param k: key
         :return: value linked to k if k in dict else KeyError
         """
-        self.get_entry_for(k).find(k)
 
-    def delete(self, k):
-        self.get_entry_for(k).remove(k)
+        if k in self.keys:
+            survey_nb, node = self.get_entry_for(k).find(k,
+                                                        survey_nb_check)
+            if survey_nb_check:
+                return survey_nb
+            else:
+                return node.getValue()
+        else:
+            raise KeyError
 
-    def __setitem__(self, k, v):
-        self.insert(k, v)
-
-    def __getitem__(self, k):
-        return self.search(k)
-
-    def __delitem__(self, k):
-        self.delete(self, k)
+    def delete(self, k, survey_nb_check=False):
+        survey_nb = self.get_entry_for(k).remove(k, survey_nb_check)
+        self.keys.remove(k)
+        return survey_nb
