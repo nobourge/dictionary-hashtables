@@ -1,0 +1,153 @@
+\documentclass[utf8]{article}
+
+\usepackage[utf8]{inputenc}
+
+\usepackage[parfill]{parskip}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+\usepackage{fullpage}
+\usepackage{multirow}
+
+% -----------------------------------------------------
+
+
+\title{Hashtables}
+\author{Bourgeois Noé}
+\date{16 mai 2021}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\newpage
+
+% -----------------------------------------------------
+
+\section{Introduction}
+ Il existe différentes méthodes de résolution des collisions des tables de hachage.
+ Pour étudier les caractéristiques de 3 d'entre elles, nous avons implémenté une classe pour chacune, représentant un dictionnaire dont les clefs (uniques comme dans un dict en Python, ce qui implique que lors d’une insertion à une clef k donnée dans le conteneur, si cette clef existe déjà, il faut remplacer la valeur stockée) et valeurs sont des chaînes de caractères (donc des objets de type str):
+
+\begin{tabular}{|c|c|c|c|} 
+\hline
+classe & DictOpenAddressing & DictChainingLinkedList & DictChainingSkipList \\
+\hline
+
+gestion des collisions & double hachage & liste chaînée & skiplist \\
+\hline
+
+\multirow{2}{*}{algorithme(s) de hachage} & \multicolumn{3}{c|}{djb2} \\\cline{2-4}
+                                        & KR & \multicolumn{2}{|c|}{} \\
+\hline
+
+\multirow{8}{*}{methodes} & \multicolumn{3}{l|}{\_\_init\_\_(self, m):} \\
+                            & \multicolumn{3}{l|}{initialise l’objet} \\\cline{2-4}
+                        & \multicolumn{3}{l|}{\_\_len\_\_(self):} \\
+                         & \multicolumn{3}{l|}{retourne le nombre d’éléments stockés (et non la taille de la table)} \\\cline{2-4}
+                         
+                         & \multicolumn{3}{l|}{insert(self, key, value):}\\
+                         & \multicolumn{3}{l|}{insère l’élément value associé à la clef key }\\
+                         & \multicolumn{3}{l|}{lance une OverflowError
+                            si l’insertion est impossible)} \\\cline{2-4}
+                            
+                         & \multicolumn{3}{l|}{search(self, key):}\\
+                         & \multicolumn{3}{l|}{renvoie la valeur associée à la clef key si cette dernière existe dans le
+                        conteneur}\\
+                        & \multicolumn{3}{l|}{lance une KeyError sinon} \\\cline{2-4}
+                         & \multicolumn{3}{l|}{\_\_setitem\_\_(self, key, value):}\\
+                         & \multicolumn{3}{l|}{appelle insert} \\\cline{2-4}
+                         
+                         & \multicolumn{3}{l|}{\_\_getitem\_\_(self, key):}\\
+                         & \multicolumn{3}{l|}{appelle search}\\\cline{2-4}
+                            
+                         & \multicolumn{3}{l|}{delete(self, key):}\\
+                         & \multicolumn{3}{l|}{retire l’élément de clef key du conteneur s’il existe et lance une KeyError sinon} \\\cline{2-4}
+                         
+                         & \multicolumn{3}{l|}{\_\_delitem\_\_(self, key):}\\
+                         & \multicolumn{3}{l|}{ appelle delete} \\\cline{2-4}
+ \hline
+ propriété & \multicolumn{3}{l|}{load\_factor:} \\
+            & \multicolumn{3}{l|}{renvoie le facteur de charge:}\\ 
+            & \multicolumn{3}{l|}{nombre d’éléments
+    stockés dans le conteneur/taille de la table} \\
+
+\hline
+
+\end{tabular}
+
+\section{Méthodes}
+\subsection{KR}
+
+% Exemple d'ajout d'un pseudo-code avec les packages algorithm/algorithmicx
+\begin{algorithm}
+\caption{Algorithme de Kernighan \& Ritchie}
+\begin{algorithmic}[1]
+\Procedure{KR}{\textbf{string} $s$}
+\State \verb+hash+ $\gets$ 0
+\ForAll{\textbf{char} $c$ \textbf{in} $s$}
+  \State \verb+hash+ $\gets$ \verb+hash+ + $c$
+\EndFor
+\State \Return \verb+hash+
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{djb2}
+
+\begin{algorithm}
+\caption{Algorithme djb2 de Daniel J. Bernstein}
+\begin{algorithmic}[1]
+\Procedure{djb2}{\textbf{string} $s$}
+\State \verb+hash+ $\gets$ 0x1505
+\ForAll{\textbf{char} $c$ \textbf{in} $s$}
+  \State \verb+hash+ $\gets$ 33x \verb+hash+ + $c$
+\EndFor
+\State \Return \verb+hash+
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Sous-sous-section}
+
+\newpage
+
+\section{Résultats}
+    \begin{figure}[H]
+  \centering
+	\includegraphics[scale=0.4]{img/logo.png}
+  \label{fig:logo}
+\end{figure}
+
+     statistiques sur le temps nécessaire pour l’exécution des méthodes insert, search et delete de
+la classe DictOpenAddressing pour différentes valeurs de α ainsi que des représentations graphiques
+
+    comparaison du nombre de sondages effectués par les méthodes insert, search et delete des
+classes DictChainingLinkedList et DictChainingSkipList ;
+    
+    discussion sur les avantages et inconv´enients de ces deux classes
+% Exemple d'ajout d'un tableau
+\begin{center}
+\begin{tabular}{|c|c|}
+\hline
+1$^{\text{ère}}$ ligne & test \\
+2$^{\text{ème}}$ ligne & test 2 \\
+ 
+\hline
+\end{tabular}
+\end{center}
+comparaison de ces valeurs ainsi que du nombre moyen de sondages avant de trouver une cellule
+libre avec les r´esultats th´eoriques vus au cours
+
+\section{Discussion}
+l’insertion par chaînage ne peut pas lancer d’exception car l’insertion y est toujours possible
+    discussion sur l’hypoth`ese de hachage uniforme pour les diff´erentes fonctions de hachage impl´ement´ees
+\section{Conclusion}
+    L'adressage ouvert est plus performant que le chaînage mais est limité par la taille de son dictionnaire.
+
+\end{document}
