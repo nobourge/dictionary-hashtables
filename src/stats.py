@@ -2,13 +2,14 @@ from projet3 import *
 import prenoms
 from time import time
 
-size = 1000000
+size = 100
 
 doa = DictOpenAddressing(size)
 dcl = DictChainingLinkedList(size)
 dcs = DictChainingSkipList(size)
 
 for d in (doa, dcl, dcs):
+    print(d)
     insertion_survey_nb_at_size = {}
     insertion_time_at_size = {}
     insertion_error_at_size = {}
@@ -20,9 +21,6 @@ for d in (doa, dcl, dcs):
     deletion_survey_nb_at_size = {}
     deletion_time_at_size = {}
     deletion_error_at_size = {}
-
-
-
 
     insertion_survey_nb_at_size[size] = []
     insertion_time_at_size[size] = []
@@ -44,7 +42,7 @@ for d in (doa, dcl, dcs):
         nom = prenoms.get_nom()
         d.insert(prenom, nom)
 
-        if insertion in (1000, 500000, 800000, 1000000):
+        if d.load_factor in (1/5, 2/5, 3/5, 4/5):
             prenom = prenoms.get_prenom()
             nom = prenoms.get_nom()
             print(prenom, nom)
@@ -54,6 +52,7 @@ for d in (doa, dcl, dcs):
                 survey_nb = d.insert(prenom, nom)
                 last_prenom_inserted = prenom
             except OverflowError:
+                print('Overflowerror')
                 insertionError = True
                 survey_nb = 'error'
 
